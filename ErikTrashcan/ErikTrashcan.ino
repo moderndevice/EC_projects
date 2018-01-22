@@ -65,7 +65,7 @@ unsigned int distance_CM;
 const int trigPin1 = 0;
 const int echoPin1 = 1;
 const int trigPin2 = 3;
-const int echoPin2 =  4;
+const int echoPin2 = 4;
 
 const unsigned long maxDuration = 2000; // around 10 feet
 //                                      // the sensor gets flaky at greater distances.
