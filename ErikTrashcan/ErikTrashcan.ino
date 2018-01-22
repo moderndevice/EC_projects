@@ -1,9 +1,9 @@
 /*  Wav File Player For E.C.
     Plays Wav files at random triggered by two
     HC-SR04 ultra-sonic distance sensors.
-    Audio files should be 44.1 khz, 16 bit format.
+    Audio files should be 44.1 khz, 16 bit format, wav.
     Audio files on the SD card should be in the root directory
-    (not in a folder). 
+    (not in a folder).
     The file names should have a 1 or 2 digit prefix, between 0 and 99 inclusive.
     followed by ".wav". "01.wav", "0.wav", and "99.wav" are all valid file names.
     File names need not be contiguous and may start anywhere you want.
@@ -11,7 +11,7 @@
     digits are between 0-99.
     No other files on the card should start with numbers.
 
-    The sketch will not continue to play if either sensor is blocked continuously, 
+    The sketch will not continue to play if either sensor is blocked continuously,
     although there is not error checking for this condition.
 */
 
@@ -67,8 +67,9 @@ const int echoPin1 = 1;
 const int trigPin2 = 3;
 const int echoPin2 =  4;
 
-const unsigned long maxDuration = 1400; // around 10 feet
+const unsigned long maxDuration = 2000; // around 10 feet
 //                                      // the sensor gets flaky at greater distances.
+const int sensThresh = 1600; // sensing distance for ultra-sonics
 
 int lastVolumePotVal;
 int fileIndex;
@@ -157,10 +158,16 @@ void setup() {
 /**************** loop start ***************/
 void loop() {
   int distance1 =  HC_SRO4read(1);
-  delayMicroseconds(300);
+  delayMicroseconds(900);
   int distance2 =   HC_SRO4read(2);
+  delayMicroseconds(900);
 
-  if (distance1 < 1200) {
+  Serial.print(distance1);
+  Serial.print("\t");
+  Serial.println(distance2);
+
+
+  if (distance1 < sensThresh) {
     if (distReset1 == 1) {
       Serial.print("distance1 ");
       Serial.println(distance1);
@@ -171,7 +178,7 @@ void loop() {
     distReset1 = 1;
   }
 
-  if (distance2 < 1200) {
+  if (distance2 < sensThresh) {
     if (distReset2 == 1) {
       Serial.print("distance2 ");
       Serial.println(distance2);
@@ -183,7 +190,7 @@ void loop() {
   }
   //  Serial.println();
 
-  if ((distance1 < 1200) || (distance2 < 1200)) {
+  if ((distance1 < sensThresh) || (distance2 < sensThresh)) {
     if (!playSdWav1.isPlaying()) {          // comment this back in if you don't want to interupt the file (retrigger)
       int rh = randomHat(fileNos);
       parseFileName(rh);
@@ -191,7 +198,7 @@ void loop() {
       delay(5); // short delay seems to be necessary or it skips files
       Serial.print("playing file ");
       Serial.println(rh);
-      delay(1000);
+      delay(4000);
     }
   }
 }
@@ -242,7 +249,7 @@ int HC_SRO4read(int sensNo) {
     digitalWrite(trigPin1, HIGH);
     delayMicroseconds(4);
     digitalWrite(trigPin1, LOW);
-    delayMicroseconds(300);  // wait as long as possible for transmit transducer to stop ringing
+    delayMicroseconds(250);  // wait as long as possible for transmit transducer to stop ringing
     // before looking for a return pulse
     // if you get zeros in your output reduce 300 by a little, say 250
     duration = pulseIn(echoPin1, HIGH, maxDuration);
@@ -272,7 +279,6 @@ int HC_SRO4read(int sensNo) {
   //  Serial.print(distance_CM);
   //  Serial.print("\t"); // print tab
   //  Serial.println(noiseFilter(duration));   // noise filter uses raw duration val, return CM
-
   // delay(50);  // use at least 50 ms delay
 }
 
@@ -287,7 +293,6 @@ int HC_SRO4read(int sensNo) {
 #define randomHatStartNum 0  // starting number in hat
 #define randomHatEndNum 25    // ending number in hat - end has to be larger than start  
 
-
 int randomHat(int numberInHat) {
   int thePick;		//this is the return variable with the random number from the pool
   int theIndex;
@@ -296,8 +301,8 @@ int randomHat(int numberInHat) {
 
   if  (currentNumInHat == 0) {                  // hat is emply - all have been choosen - fill up array again
     for (int i = 0 ; i < numberInHat; i++) {    // Put 1 TO numberInHat in array - starting at address 0.
-      if (randomHatStartNum < randomHatEndNum) {
-        randArray[i] = randomHatStartNum + i;
+      if (randomHatStartNum < numberInHat) {
+        randArray[i] = i;
       }
     }
     currentNumInHat = abs(numberInHat);   // reset current Number in Hat
@@ -316,7 +321,7 @@ int randomHat(int numberInHat) {
 
 void listFiles(File dir) {
   fileNos = 0;
-  while (true){
+  while (true) {
     File entry = dir.openNextFile();
     if (!entry) {
       Serial.println("NO MORE FILES!");
