@@ -62,7 +62,7 @@ unsigned int SonarCloseness;
 unsigned int duration, lastDuration;
 unsigned int distance_CM;
 
-const int trigPin1 = 0;
+const int trigPin1 = 0; 
 const int echoPin1 = 1;
 const int trigPin2 = 3;
 const int echoPin2 = 4;
